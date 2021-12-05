@@ -247,6 +247,7 @@ class RumahController extends Controller
             return redirect()->route('home')->with(['error' => 'Data Gagal Di Hapus!']);
         }
     }
+    
 
     public function alert($AlertType){
         switch ($AlertType) {
@@ -276,4 +277,7 @@ class RumahController extends Controller
         break;
         }
         }
+
+
+       
 }

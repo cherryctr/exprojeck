@@ -21,8 +21,15 @@ use Illuminate\Support\Facades\Route;
 //     return view('welcome');
 // });
 
+Route::get('file-export', [App\Http\Controllers\HomeController::class, 'fileExport'])->name('file-export');
+
+Route::get('pdfview',array('as'=>'pdfview','uses'=>'HomeController@pdfExport'));
 
 
+
+Route::get('/filter/datakecamatan', [App\Http\Controllers\HomeController::class, 'filterDataKecamatan']);
+
+Route::get('/filter/datakelurahan', [App\Http\Controllers\HomeController::class, 'filterDataKelurahan']);
 Route::get('/hapus/{id_rumah}',[App\Http\Controllers\RumahController::class,'delete'])->name('hapusdatarumah');
 Route::get('/data/{district_id}/kelurahan',[App\Http\Controllers\HomeController::class,'getKelurahan'])->name('hapusdatarumah');
 

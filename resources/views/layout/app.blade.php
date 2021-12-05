@@ -25,10 +25,15 @@
   <link rel="stylesheet" href="{{ asset('dist/css/adminlte.min.css') }}">
   <link rel="stylesheet" href="{{ asset('css/style.css') }}">
 
+
+
   <!-- CSS SELECT2 -->
-  
 
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  
+
+
 
  
 
@@ -64,7 +69,7 @@
     <!-- /.control-sidebar -->
 </div>
 <!-- ./wrapper -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <!-- jQuery -->
 <script src="{{ asset('plugins/jquery/jquery.min.js') }}"></script>
 
@@ -94,19 +99,26 @@
 
 
 "></script>
-
+<script>
+    $(document).ready(function() {
+    $('.test-select2').select2();
+});
+</script>
 <!-- Page specific script -->
 <script>
 
-$(document).ready(function() {
-    $('.js-example-basic-single').select2();
-});
+
+
+
   $(function () {
     $("#example1").DataTable({
-      "responsive": true, "lengthChange": true, "autoWidth": false,
-      "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"],
-      "lengthMenu": [[5, 10, 25, 50, -1], [5,10, 25, 50, "All"]],
-      "messageTop" : 'DATA TEMPAT IBADAH KABUPATEN TANGGERANG',
+    "buttons": ["excel", "pdf"],
+    "dom": '<"top"i>rt<"bottom"flp>',
+    "responsive": true, "lengthChange": true, "autoWidth": false,
+     
+      
+    "lengthMenu": [[5, 10, 25, 50, -1], [5,10, 25, 50, "All"]],
+     
       
 
     }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
@@ -174,7 +186,7 @@ $(document).ready(function() {
                                   var option = "<option value='"+city_id+"'>"+name+"</option>";
 
                               $("#city").append(option);
-                              }
+                              }≈
                           }
                       }
                   })

@@ -10,7 +10,9 @@ use Yajra\DataTables\Services\DataTable;
 use Yajra\Datatables\Datatables;
 
 
-
+use PDF;
+use App\Exports\Test;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use App\HomeModel;
 use App\Kategori;
@@ -50,6 +52,13 @@ class HomeController extends Controller
         $city = City::orderby("name","asc")
                     ->select('id','name')->where('id',3603)->get();
 
+        $kecamatan = Kecamatan::orderby("name","asc")
+                    ->select('id','name')->where('city_id',3603)->get();
+                    
+
+        $kelurahan = Kelurahan::orderby("name","asc")
+                    ->select('id','name')->get();
+
         $data['kategori'] = Kategori::all();
 
      
@@ -57,10 +66,12 @@ class HomeController extends Controller
         $dataku = Kecamatan::withCount('masjid','mushola','gerejakeristen','gerejakatolik','purehindu','purebudha','kelenteng')->orderBy('name','asc')->get();
         
 
-        $datakuid = Kecamatan::with('rumah')->withCount('masjid','mushola','gerejakeristen','gerejakatolik','purehindu','purebudha','kelenteng')->orderBy('name','asc')->get();
+        $datakuid = Kecamatan::withCount('masjid','mushola','gerejakeristen','gerejakatolik','purehindu','purebudha','kelenteng')
+        ->join('rumah_ibadah','indonesia_districts.id','=','rumah_ibadah.district_id')
+        ->orderBy('name','asc')->groupBy('district_id')->get();
         
 
-    //   dd($datakuid);
+        // dd($datakuid);
       
        
        
@@ -89,13 +100,19 @@ class HomeController extends Controller
         $data['angkaPureBudha'] = $data['dataPureBudha']->count();
         $data['dataKelenteng'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',7)->get();
         $data['angkaKelenteng']= $data['dataKelenteng']->count();
-        return view('layout.dashboard.indexone',compact('data','dataku','datakuid','city'));
+        return view('layout.dashboard.indexone',compact('kecamatan','kelurahan','data','dataku','datakuid','city'));
     }
 
     public function getKelurahan(Request $request, $district_id){
 
         $datakuid = Kelurahan::with('rumah')->withCount('masjid','mushola','gerejakeristen','gerejakatolik','purehindu','purebudha','kelenteng')->orderBy('name','asc')->where('district_id',$request->district_id)->get();
         // dd($datakuid);
+
+        $kelurahan = Kelurahan::orderby("name","asc")
+        ->select('id','name')->get();
+
+        $kecamatan = Kecamatan::orderby("name","asc")
+        ->select('id','name')->where('city_id',3603)->get();
 
         // MENGHITUNG JUMLAH KATERGORI SELURUH KOTA, KELURAHAN DAN KECAMATAN
         $data['dataAngkaMasjid'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',1)->get();
@@ -112,7 +129,7 @@ class HomeController extends Controller
         $data['angkaPureBudha'] = $data['dataPureBudha']->count();
         $data['dataKelenteng'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',7)->get();
         $data['angkaKelenteng']= $data['dataKelenteng']->count();
-        return view('layout.dashboard.datakelurahan',compact('data','datakuid','datakuid'));
+        return view('layout.dashboard.datakelurahan',compact('data','datakuid','kecamatan','datakuid','kelurahan'));
     }
 
 
@@ -188,9 +205,13 @@ public function getVillages($district_id){
     {
         //
         // DATA SATUAN
+        $data = [];
         $villages_id = $request->village;
         $kategori_id = $request->kategory;
         $getDataByKelurahan = Rumah::where('villages_id','=',$villages_id)->where('kategori_id','=',$kategori_id)->get();
+
+        $kelurahan = Kelurahan::orderby("name","asc")
+        ->select('id','name')->get();
         // dd($getDataByKelurahan);
         // MENGHITUNG JUMLAH KATERGORI SELURUH KOTA, KELURAHAN DAN KECAMATAN
         $data['dataAngkaMasjid'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',1)->get();
@@ -208,7 +229,7 @@ public function getVillages($district_id){
         $data['dataKelenteng'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',7)->get();
         $data['angkaKelenteng']= $data['dataKelenteng']->count();
        
-        return view('layout.dashboard.datadetail',compact('data','getDataByKelurahan'));
+        return view('layout.dashboard.datadetail',compact('data','getDataByKelurahan','kelurahan'));
 
         
     }
@@ -257,4 +278,97 @@ public function getVillages($district_id){
     {
         //
     }
+
+    public function filterDataKecamatan(Request $request){
+        $data = [];
+          
+        $id=$request->id;
+        $city = City::orderby("name","asc")
+                ->select('id','name')->where('id',3603)->get();
+
+        $kecamatan = Kecamatan::orderby("name","asc")
+                ->select('id','name')->where('city_id',3603)->get();
+
+        $datasu = Kecamatan::with('rumah')->select('id','name')->withCount('masjid','mushola','gerejakeristen','gerejakatolik','purehindu','purebudha','kelenteng')->orderBy('name','asc')->where('id',$request->id)->get();
+
+        
+  
+         // MENGHITUNG JUMLAH KATERGORI SELURUH KOTA, KELURAHAN DAN KECAMATAN
+         $data['dataAngkaMasjid'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',1)->get();
+         $datamasjid = $data['dataAngkaMasjid']->count();
+         $data['dataAngkaMushola'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',2)->get();
+         $data['angkaMushola'] = $data['dataAngkaMushola']->count();
+         $data['dataGerejaKristen'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',3)->get();
+         $data['angkaGerejaKristen'] = $data['dataGerejaKristen']->count();
+         $data['dataGerejaKatolik'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',4)->get();
+         $data['angkaGerejaKatolik'] = $data['dataGerejaKatolik']->count();
+         $data['dataPureHindu'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',5)->get();
+         $data['angkaPureHindu'] = $data['dataPureHindu']->count();
+         $data['dataPureBudha'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',6)->get();
+         $data['angkaPureBudha'] = $data['dataPureBudha']->count();
+         $data['dataKelenteng'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',7)->get();
+         $data['angkaKelenteng']= $data['dataKelenteng']->count();
+        
+
+         
+    
+    return view('layout.dashboard.filterpage',compact('data','city','kecamatan','datamasjid','datasu'));
+    
+
+
+
+    
+    }
+
+    public function filterDataKelurahan(Request $request){
+        $data = [];
+        $id=$request->id;
+        $datakuid = Kelurahan::with('rumah')->withCount('masjid','mushola','gerejakeristen','gerejakatolik','purehindu','purebudha','kelenteng')->orderBy('name','asc')->where('district_id',$request->district_id)->get();
+        // dd($datakuid);
+        $city = City::orderby("name","asc")
+                ->select('id','name')->where('id',3603)->get();
+
+        $kecamatan = Kecamatan::orderby("name","asc")
+                ->select('id','name')->where('city_id',3603)->get();
+
+        $datasu = Kelurahan::with('rumah')->select('id','name')->withCount('masjid','mushola','gerejakeristen','gerejakatolik','purehindu','purebudha','kelenteng')->orderBy('name','asc')->where('id',$request->id)->get();
+
+         // MENGHITUNG JUMLAH KATERGORI SELURUH KOTA, KELURAHAN DAN KECAMATAN
+         $data['dataAngkaMasjid'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',1)->get();
+         $datamasjid = $data['dataAngkaMasjid']->count();
+         $data['dataAngkaMushola'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',2)->get();
+         $data['angkaMushola'] = $data['dataAngkaMushola']->count();
+         $data['dataGerejaKristen'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',3)->get();
+         $data['angkaGerejaKristen'] = $data['dataGerejaKristen']->count();
+         $data['dataGerejaKatolik'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',4)->get();
+         $data['angkaGerejaKatolik'] = $data['dataGerejaKatolik']->count();
+         $data['dataPureHindu'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',5)->get();
+         $data['angkaPureHindu'] = $data['dataPureHindu']->count();
+         $data['dataPureBudha'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',6)->get();
+         $data['angkaPureBudha'] = $data['dataPureBudha']->count();
+         $data['dataKelenteng'] = Rumah::with('kota','kecamatan','kelurahan','kategoris')->select('kategori_id')->where('kategori_id',7)->get();
+         $data['angkaKelenteng']= $data['dataKelenteng']->count();
+        
+  
+         // MENGHITUNG JUMLAH KATERGORI SELURUH KOTA, KELURAHAN DAN KECAMATAN
+    
+    return view('layout.dashboard.filterkel',compact('data','city','kecamatan','datamasjid','datasu','datakuid'));
+
+
+
+    }
+
+    public function pdfExport(Request $request) 
+    {  
+
+        $users = DB::table("users")->get();
+        view()->share('users',$users);
+        if($request->has('download')){
+            $pdf = PDF::loadView('pdfView');
+            return $pdf->download('pdfview.pdf');
+        }
+    }
+    
+    
+
 }
